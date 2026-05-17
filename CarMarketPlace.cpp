@@ -2,6 +2,8 @@
 #include <string>
 #include "IListable.h"
 #include "IVehicle.h"
+#include "IUser.h"
+#include "ISearchable.h"
 using namespace std;
 
 
@@ -258,3 +260,347 @@ public:
     string getBikeType() const { return bikeType; }
     bool getHasCarrier() const { return hasCarrier; }
 };
+class User : public IUser {
+protected:
+    int userID;
+    string fullName;
+    string emailAddr;
+    string contactNo;
+    const string country;
+    static int registeredCount;
+
+public:
+    User() : country("Pakistan") {
+        userID = 0;
+        fullName = "";
+        emailAddr = "";
+        contactNo = "";
+        registeredCount++;
+    }
+
+    User(int id, string name, string email, string phone) : country("Pakistan") {
+        userID = id;
+        fullName = name;
+        emailAddr = email;
+        contactNo = phone;
+        registeredCount++;
+    }
+
+    User(const User &src) : country("Pakistan") {
+        userID = src.userID;
+        fullName = src.fullName;
+        emailAddr = src.emailAddr;
+        contactNo = src.contactNo;
+        registeredCount++;
+    }
+
+    virtual ~User() {}
+
+    virtual void showProfile() const {
+        cout << "User [" << userID << "]: " << fullName << " | " << emailAddr << endl;
+    }
+
+    void updateEmail(string newEmail) { emailAddr = newEmail; }
+    void updateContact(string newPhone) { contactNo = newPhone; }
+    virtual string getRole() const { return "User"; }
+    static int getRegisteredCount() { return registeredCount; }
+
+    string getFullName() const { return fullName; }
+    int getID() const { return userID; }
+    string getEmailAddr() const { return emailAddr; }
+};
+
+int User::registeredCount = 0;
+
+
+class Seller : public User {
+    float sellerRating;
+    int activeListings;
+    string baseCity;
+    bool accountVerified;
+    int avgResponseMins;
+
+public:
+    Seller() : User() {
+        sellerRating = 0.0f;
+        activeListings = 0;
+        baseCity = "Unknown";
+        accountVerified = false;
+        avgResponseMins = 60;
+    }
+
+    Seller(int id, string name, string email, string phone, string city) : User(id, name, email, phone) {
+        sellerRating = 5.0f;
+        activeListings = 0;
+        baseCity = city;
+        accountVerified = true;
+        avgResponseMins = 15;
+    }
+
+    Seller(const Seller &src) : User(src) {
+        sellerRating = src.sellerRating;
+        activeListings = src.activeListings;
+        baseCity = src.baseCity;
+        accountVerified = src.accountVerified;
+        avgResponseMins = src.avgResponseMins;
+    }
+
+    void addListing() { activeListings++; }
+
+    void adjustRating(float r) {
+        if (r >= 0 && r <= 5) sellerRating = r;
+    }
+
+    void toggleVerification() { accountVerified = !accountVerified; }
+
+    void showProfile() const override {
+        cout << "Seller [" << userID << "]: " << fullName
+             << " | City: " << baseCity
+             << " | Rating: " << sellerRating
+             << " | Verified: " << (accountVerified ? "Yes" : "No") << endl;
+    }
+
+    string getRole() const override { return "Seller"; }
+    string getBaseCity() const { return baseCity; }
+    float getSellerRating() const { return sellerRating; }
+    bool isAccountVerified() const { return accountVerified; }
+    int getActiveListings() const { return activeListings; }
+
+    bool operator==(const Seller &other) const {
+        return (userID == other.userID && emailAddr == other.emailAddr);
+    }
+};
+
+
+class Buyer : public User {
+    Vehicle *savedVehicles[5];
+    int savedCount;
+    double spendingLimit;
+    string locality;
+    bool isPremium;
+
+public:
+    Buyer() : User() {
+        savedCount = 0;
+        spendingLimit = 0;
+        locality = "Unknown";
+        isPremium = false;
+        for (int i = 0; i < 5; i++) savedVehicles[i] = NULL;
+    }
+
+    Buyer(int id, string name, string email, string phone) : User(id, name, email, phone) {
+        savedCount = 0;
+        spendingLimit = 2000000;
+        locality = "Karachi";
+        isPremium = false;
+        for (int i = 0; i < 5; i++) savedVehicles[i] = NULL;
+    }
+
+    Buyer(const Buyer &src) : User(src) {
+        savedCount = src.savedCount;
+        spendingLimit = src.spendingLimit;
+        locality = src.locality;
+        isPremium = src.isPremium;
+        for (int i = 0; i < 5; i++) savedVehicles[i] = src.savedVehicles[i];
+    }
+
+    void saveVehicle(Vehicle *v) {
+        if (savedCount < 5) {
+            savedVehicles[savedCount++] = v;
+            cout << "Saved: " << v->getBrand() << " " << v->getModelName() << endl;
+        } else {
+            cout << "Saved list is full." << endl;
+        }
+    }
+
+    void displaySaved() const {
+        cout << "--- " << fullName << "'s Saved Vehicles ---" << endl;
+        for (int i = 0; i < savedCount; i++)
+            if (savedVehicles[i]) savedVehicles[i]->displayDetails();
+    }
+
+    void setSpendingLimit(double limit) { spendingLimit = limit; }
+
+    void removeSaved(int index) {
+        if (index >= 0 && index < savedCount) {
+            for (int i = index; i < savedCount - 1; i++)
+                savedVehicles[i] = savedVehicles[i + 1];
+            savedVehicles[--savedCount] = NULL;
+            cout << "Removed from saved list." << endl;
+        }
+    }
+
+    void showProfile() const override {
+        cout << "Buyer [" << userID << "]: " << fullName
+             << " | Budget: Rs." << spendingLimit
+             << " | Area: " << locality
+             << " | Premium: " << (isPremium ? "Yes" : "No") << endl;
+    }
+
+    string getRole() const override { return "Buyer"; }
+    double getSpendingLimit() const { return spendingLimit; }
+    bool getPremiumStatus() const { return isPremium; }
+};
+
+
+class Review {
+    int reviewID;
+    int starRating;
+    string reviewBody;
+    int authorID;
+    string postedOn;
+    bool flagged;
+    const int maxAllowedRating;
+
+public:
+    Review() : maxAllowedRating(5) {
+        reviewID = 0;
+        starRating = 0;
+        reviewBody = "";
+        authorID = 0;
+        postedOn = "";
+        flagged = false;
+    }
+
+    Review(int id, int aID, string date) : maxAllowedRating(5) {
+        reviewID = id;
+        starRating = 0;
+        reviewBody = "";
+        authorID = aID;
+        postedOn = date;
+        flagged = false;
+    }
+
+    Review(const Review &src) : maxAllowedRating(5) {
+        reviewID = src.reviewID;
+        starRating = src.starRating;
+        reviewBody = src.reviewBody;
+        authorID = src.authorID;
+        postedOn = src.postedOn;
+        flagged = src.flagged;
+    }
+
+    void submitReview(int stars, string body) {
+        if (stars >= 1 && stars <= maxAllowedRating) {
+            starRating = stars;
+            reviewBody = body;
+            cout << "Review submitted successfully." << endl;
+        } else {
+            cout << "Stars must be between 1 and " << maxAllowedRating << "." << endl;
+        }
+    }
+
+    void flagReview() { flagged = true; }
+    void editBody(string newBody) { reviewBody = newBody; }
+
+    void printReview() const {
+        cout << starRating << "/" << maxAllowedRating << " - " << reviewBody;
+        if (flagged) cout << " [FLAGGED]";
+        cout << endl;
+    }
+
+    int getStarRating() const { return starRating; }
+    bool isFlagged() const { return flagged; }
+
+    Review &operator=(const Review &src) {
+        if (this != &src) {
+            reviewID = src.reviewID;
+            starRating = src.starRating;
+            reviewBody = src.reviewBody;
+            authorID = src.authorID;
+            postedOn = src.postedOn;
+            flagged = src.flagged;
+        }
+        return *this;
+    }
+
+    bool operator==(const Review &other) const {
+        return (reviewID == other.reviewID && authorID == other.authorID);
+    }
+};
+
+
+class Message {
+    int msgID;
+    int senderID;
+    int receiverID;
+    string msgBody;
+    string sentAt;
+    bool readStatus;
+    const int maxBodyLength;
+
+public:
+    Message() : maxBodyLength(500) {
+        msgID = 0;
+        senderID = 0;
+        receiverID = 0;
+        msgBody = "";
+        sentAt = "";
+        readStatus = false;
+    }
+
+    Message(int id, int from, int to, string body, string timestamp) : maxBodyLength(500) {
+        msgID = id;
+        senderID = from;
+        receiverID = to;
+        msgBody = body;
+        sentAt = timestamp;
+        readStatus = false;
+    }
+
+    Message(const Message &src) : maxBodyLength(500) {
+        msgID = src.msgID;
+        senderID = src.senderID;
+        receiverID = src.receiverID;
+        msgBody = src.msgBody;
+        sentAt = src.sentAt;
+        readStatus = src.readStatus;
+    }
+
+    Message &operator=(const Message &src) {
+        if (this != &src) {
+            msgID = src.msgID;
+            senderID = src.senderID;
+            receiverID = src.receiverID;
+            msgBody = src.msgBody;
+            sentAt = src.sentAt;
+            readStatus = src.readStatus;
+        }
+        return *this;
+    }
+
+    void markRead() { readStatus = true; }
+
+    void printMessage() const {
+        cout << "[Msg #" << msgID << "] From: " << senderID
+             << " To: " << receiverID
+             << " | " << sentAt
+             << " | " << (readStatus ? "Read" : "Unread")
+             << "\n  >> " << msgBody << endl;
+    }
+
+    void editBody(string newText) {
+        if ((int)newText.length() <= maxBodyLength)
+            msgBody = newText;
+        else
+            cout << "Message too long. Max " << maxBodyLength << " characters." << endl;
+    }
+
+    bool isRead() const { return readStatus; }
+    int getMsgID() const { return msgID; }
+    string getMsgBody() const { return msgBody; }
+    int getSenderID() const { return senderID; }
+    int getReceiverID() const { return receiverID; }
+
+    bool operator==(const Message &other) const {
+        return (msgID == other.msgID);
+    }
+
+    friend void logMessageExchange(const Message &m);
+};
+
+void logMessageExchange(const Message &m) {
+    cout << "[LOG] Message #" << m.msgID << " sent from user "
+         << m.senderID << " to user " << m.receiverID
+         << " at " << m.sentAt << endl;
+}
