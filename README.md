@@ -45,7 +45,7 @@ g++ -std=c++11 CarMarketPlace.cpp -o carMarketplace
 
 ## PakWheels Website Screenshots and Code
 
-### 1. Homepage Search — Search by Make, Model, City, Price
+### 1. Homepage Search : Search by Make, Model, City, Price
 
 This is the main search bar on pakwheels homepage. Users can search by car make, model, city and price range.
 
@@ -87,7 +87,7 @@ void filterByPrice(double maxPrice) const override {
 
 ---
 
-### 2. Sell Your Car — Seller Posting a Listing
+### 2. Sell Your Car : Seller Posting a Listing
 
 Pakwheels lets sellers post ads themselves and connect directly with buyers.
 
